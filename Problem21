@@ -1,0 +1,52 @@
+clc
+clear
+close all
+
+
+% Define parameters
+Ppeak = 16.65; % Peak power (W)
+L = 1e3; % Length of fiber (m)
+n2 = 2.5e-20; % Nonlinear refractive index coefficient (m^2/W)
+n0 = 1.45; % Linear refractive index
+c = 3e8; % Speed of light (m/s)
+epsilon0 = 8.85e-12; % Vacuum permittivity (F/m)
+Aeff = 20e-12; % Effective mode area (m^2)
+lambda0 = 1550e-9; % Center wavelength (m)
+omega0 = 2*pi*c/lambda0; % Center angular frequency (rad/s)
+
+% Define function for nonlinear phase shift
+phi_NL = @(L, Ppeak) (omega0 * n2 * L * Ppeak) / (Aeff * n0 * c * epsilon0);
+
+% Define time and frequency arrays
+t = linspace(-10e-6, 10e-6, 8*10^5); % Time array (s)
+dt = t(2) - t(1); % Time step (s)
+df = 1/(length(t)*dt) % Frequency step (Hz)
+f = linspace(-1/(2*dt), 1/(2*dt)-df, length(t)); % Frequency array (Hz)
+
+% Define electric field pulse
+Et = exp(-4*log(2)*(t/(100e-12)).^2); % Gaussian pulse shape
+Et = Et / sqrt(sum(abs(Et).^2)*dt); % Normalize energy to 1 nJ
+
+% Calculate nonlinear phase shift
+phiNL = phi_NL(L, Ppeak);
+
+% Apply nonlinear phase shift to electric field pulse
+Et = Et .* exp(1j*phiNL*abs(Et).^2*L);
+
+% Perform FFT to obtain frequency-domain electric field
+Ef = fftshift(fft(Et));
+
+% Calculate intensity spectrum
+S = abs(Ef).^2 * dt^2 / (2*pi*df);
+
+% Plot intensity spectrum
+plot(f, S)
+xlabel('Frequency (Hz)')
+ylabel('Intensity spectrum')
+
+
+
+
+
+
+
